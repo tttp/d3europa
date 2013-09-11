@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/* CSS goes here. */
+.subunit {
+fill: #ddd;	
+}
+
+.subunit-label {
+  fill: #000;
+  fill-opacity: .5;
+  font-size: 10px;
+  font-weight: 300;
+  text-anchor: middle;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.place-label {
+  fill: #000;
+  fill-opacity: .5;
+  font-size: 10px;
+  font-weight: 300;
+  text-anchor: middle;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+var width = 960,
+    height = 1160;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+d3.json("europe50b.json", function(error, europe50b) {
+	
+var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
+
+var projection = d3.geo.mercator()
+    .scale(500)
+    .translate([width / 2 - 250, height / 2 + 300]);
+
+var path = d3.geo.path()
+    .projection(projection);
+	
+svg.append("path")
+  	.datum(subunits)
+  	.attr("d", path);
+	
+svg.selectAll(".subunit")
+    .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
+  .enter().append("path")
+    .attr("class", function(d) { return "subunit " + d.id; })
+    .attr("d", path);
+	
+svg.append("path")
+    .datum(topojson.feature(europe50b, europe50b.objects.euplaces50))
+    .attr("d", path)
+	.attr("r", "1px")
+	.attr("d", path.pointRadius(2))
+    .attr("class", "place");
+	
+svg.selectAll(".place-label")
+    .data(topojson.feature(europe50b, europe50b.objects.euplaces50).features)
+  .enter().append("text")
+    .attr("class", "place-label")
+    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+	
+svg.selectAll(".place-label")
+    .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+    .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
+
+/* country label	
+svg.selectAll(".subunit-label")
+    .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
+  .enter().append("text")
+    .attr("class", function(d) { return "subunit-label " + d.id; })
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+*/
+	
+});
+
+
+</script>
