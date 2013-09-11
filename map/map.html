@@ -4,7 +4,7 @@
 
 /* CSS goes here. */
 .subunit {
-fill: #ddd;	
+//fill: #ddd;	
 }
 
 .subunit-label {
@@ -38,6 +38,15 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+var color = d3.scale.linear().domain([1,5]).range(['#060', '#0f0']);
+
+//Let's load the data that will be user for the choropleth
+var dataset; //global variable
+d3.json("full.json", function(error, json) {
+  if (error) return console.warn(error);
+  dataset = json;
+});
+
 
 d3.json("europe50b.json", function(error, europe50b) {
 	
@@ -46,6 +55,9 @@ var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
 var projection = d3.geo.mercator()
     .scale(500)
     .translate([width / 2 - 250, height / 2 + 300]);
+
+
+//Countries paths
 
 var path = d3.geo.path()
     .projection(projection);
@@ -58,14 +70,63 @@ svg.selectAll(".subunit")
     .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
   .enter().append("path")
     .attr("class", function(d) { return "subunit " + d.id; })
-    .attr("d", path);
+	.attr("fill", function(d) {
+	var country = d.id;
 	
+	var quota;
+	var signatures;
+	var counter = 0;
+
+  	for(a in dataset.quota){
+  	if(a == country){
+  	quota = dataset.quota[a];
+	}
+	
+  	for(a in dataset.eci){
+	if(counter < 1){
+	  //alert(dataset.eci[a][country]);
+	  signatures = dataset.eci[a][country];
+	  counter ++;
+	}
+  	}
+	
+  	}
+	
+	//alert(country + ' ' + quota + ' ' + signatures);
+	
+	if(signatures == null){
+	return "#ccc";	
+	}
+	if(signatures >= quota){
+	var diff = signatures/quota;
+	return color(diff);	
+	}
+	if(signatures < quota){
+	return "#b00"	
+	}
+	
+	return "#CCC"
+	})
+    .attr("d", path)
+	.on('click', click);
+	
+
+//If we want something to happen when clicking on each country	
+function click(d) {
+	//alert(d.properties.name);
+}
+
+
+//Cities dots
+/*	
 svg.append("path")
     .datum(topojson.feature(europe50b, europe50b.objects.euplaces50))
     .attr("d", path)
 	.attr("r", "1px")
 	.attr("d", path.pointRadius(2))
     .attr("class", "place");
+
+//Cities labels
 	
 svg.selectAll(".place-label")
     .data(topojson.feature(europe50b, europe50b.objects.euplaces50).features)
@@ -78,6 +139,8 @@ svg.selectAll(".place-label")
 svg.selectAll(".place-label")
     .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
     .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
+
+*/
 
 /* country label	
 svg.selectAll(".subunit-label")
