@@ -25,10 +25,23 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 150px;                                   
+  padding: 2px;             
+  font: 12px sans-serif;        
+  background: #eee;   
+  border: 0px;      
+  border-radius: 2px;           
+  pointer-events: none;         
+}
+
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://d3js.org/colorbrewer.v1.min.js"></script>
 <script>
 
 var width = 960,
@@ -37,8 +50,17 @@ var width = 960,
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
+	
+var div = d3.select("body").append("div")   
+    .attr("class", "tooltip")               
+    .style("opacity", 0);
 
-var color = d3.scale.linear().domain([1,5]).range(['#060', '#0f0']);
+//var color = d3.scale.linear().domain([1,5]).range(['#060', '#0f0']);
+//var color = d3.scale.ordinal().domain([0.3,6]).range(colorbrewer.RdYlGn[6]);
+
+var color = d3.scale.quantize()
+        .domain([0.1, 1.5])
+        .range(colorbrewer.RdYlGn[11]);
 
 //Let's load the data that will be user for the choropleth
 var dataset; //global variable
@@ -53,23 +75,38 @@ d3.json("europe50b.json", function(error, europe50b) {
 var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
 
 var projection = d3.geo.mercator()
-    .scale(500)
-    .translate([width / 2 - 250, height / 2 + 300]);
+    .scale(600)
+    .translate([width / 2 - 150, height / 2 + 350]);
 
 
 //Countries paths
-
 var path = d3.geo.path()
     .projection(projection);
 	
 svg.append("path")
   	.datum(subunits)
-  	.attr("d", path);
+  	.attr("d", path)
+	.attr("fill", "#ccc")
+	.transition()        
+                .duration(2000) 
+	.attr("fill", "#444");
 	
 svg.selectAll(".subunit")
     .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
   .enter().append("path")
     .attr("class", function(d) { return "subunit " + d.id; })
+	.on("mouseover", function(d) { 
+	d3.select(this).style("opacity","0.7");
+	//comment the following line to disable tooltip on mouseover 
+	tooltipin(d);
+	})
+	.on("mouseout", function(d) { 
+	d3.select(this).style("opacity","1"); 
+	tooltipout(d);
+	})
+	.attr("fill", "#a00")
+	.transition()        
+                .duration(3000) 
 	.attr("fill", function(d) {
 	var country = d.id;
 	
@@ -92,11 +129,11 @@ svg.selectAll(".subunit")
 	
   	}
 	
-	//alert(country + ' ' + quota + ' ' + signatures);
 	
 	if(signatures == null){
 	return "#ccc";	
 	}
+	/*
 	if(signatures >= quota){
 	var diff = signatures/quota;
 	return color(diff);	
@@ -104,6 +141,10 @@ svg.selectAll(".subunit")
 	if(signatures < quota){
 	return "#b00"	
 	}
+	*/
+	var diff = signatures/quota;
+	//alert(country + ' ' + diff);
+	return color(diff);
 	
 	return "#CCC"
 	})
@@ -113,7 +154,54 @@ svg.selectAll(".subunit")
 
 //If we want something to happen when clicking on each country	
 function click(d) {
-	//alert(d.properties.name);
+	//uncomment the following line to enable tooltip on click. 
+	//tooltipin(d);
+}
+
+//Some functions to recover data about each country for the tooltips
+function getquota(id){
+	var quota;
+  	for(a in dataset.quota){
+
+  	if(a == id){
+  	return dataset.quota[a];
+	}
+}
+	return "/";	
+}
+
+function getsignatures(id){
+
+	var counter = 0;
+	
+  	for(a in dataset.eci){
+	if(counter < 1){
+		if(dataset.eci[a][id] != null){
+	  	return dataset.eci[a][id];
+		}
+	  counter ++;
+	  return "/";
+	}
+  	}	
+	
+}
+
+
+//Function for showing the tooltip. It can be used for onmouseover actions or for click actions	
+function tooltipin(d){
+	div.transition()        
+                .duration(200)      
+                .style("opacity", .9);      
+            div .html(d.properties.name + "<br/>Quota: "  + getquota(d.id) + "<br/>Signatures: " + getsignatures(d.id))  
+                .style("left", (d3.event.pageX) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px"); 	
+}
+
+//Function for hiding the tooltip.	
+function tooltipout(d){
+	div.transition()        
+                .duration(500)      
+                .style("opacity", 0);	
 }
 
 
