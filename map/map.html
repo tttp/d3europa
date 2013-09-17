@@ -2,9 +2,8 @@
 <meta charset="utf-8">
 <style>
 
-/* CSS goes here. */
 .subunit {
-//fill: #ddd;	
+  /*fill: #ddd;*/	
 }
 
 .subunit-label {
@@ -60,9 +59,7 @@ var div = d3.select("body").append("div")
     .attr("class", "tooltip")               
     .style("opacity", 0);
 
-//var color = d3.scale.linear().domain([1,5]).range(['#060', '#0f0']);
-//var color = d3.scale.ordinal().domain([0.3,6]).range(colorbrewer.RdYlGn[6]);
-
+// color based on how many signatures as a % of the quota. Anything above 150% is the same color
 var color = d3.scale.quantize()
         .domain([0.1, 1.5])
         .range(colorbrewer.RdYlGn[11]);
@@ -77,83 +74,69 @@ d3.json("full.json", function(error, json) {
 
 d3.json("europe50b.json", function(error, europe50b) {
 	
-var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
+  var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
 
-var projection = d3.geo.mercator()
+  var projection = d3.geo.mercator()
     .scale(600)
     .translate([width / 2 - 150, height / 2 + 350]);
 
 
-//Countries paths
-var path = d3.geo.path()
+  //Countries paths
+  var path = d3.geo.path()
     .projection(projection);
 	
-svg.append("path")
+  svg.append("path")
   	.datum(subunits)
   	.attr("d", path)
-	.attr("fill", "#ccc")
-	.transition()        
-                .duration(2000) 
-	.attr("fill", "#444");
+	  .attr("fill", "#ccc")
+	  .transition()        
+    .duration(2000) 
+  	.attr("fill", "#444");
 	
-svg.selectAll(".subunit")
+  svg.selectAll(".subunit")
     .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
-  .enter().append("path")
+    .enter().append("path")
     .attr("class", function(d) { return "subunit " + d.id; })
-	.on("mouseover", function(d) { 
-	d3.select(this).style("opacity","0.7");
-	//comment the following line to disable tooltip on mouseover 
-	tooltipin(d);
+  	.on("mouseover", function(d) { 
+    	d3.select(this).style("opacity","0.7");
+	    //comment the following line to disable tooltip on mouseover 
+     	tooltipin(d);
 	})
 	.on("mouseout", function(d) { 
-	d3.select(this).style("opacity","1"); 
-	tooltipout(d);
+  	d3.select(this).style("opacity","1"); 
+  	tooltipout(d);
 	})
 	.attr("fill", "#a00")
 	.transition()        
-                .duration(3000) 
+  .duration(3000) 
 	.attr("fill", function(d) {
-	var country = d.id;
+	  var country = d.id;
 	
-	var quota;
-	var signatures;
-	var counter = 0;
+  	var quota;
+	  var signatures;
+	  var counter = 0;
 
   	for(a in dataset.quota){
-  	if(a == country){
-  	quota = dataset.quota[a];
-	}
+  	  if(a == country){
+  	    quota = dataset.quota[a];
+	    }
 	
-  	for(a in dataset.eci){
-	if(counter < 1){
-	  //alert(dataset.eci[a][country]);
-	  signatures = dataset.eci[a][country];
-	  counter ++;
-	}
+  	  for(a in dataset.eci){
+	      if(counter < 1){
+	        signatures = dataset.eci[a][country];
+	        counter ++;
+	      }
+  	  }
   	}
 	
-  	}
 	
-	
-	if(signatures == null){
-	return "#ccc";	
-	}
-	/*
-	if(signatures >= quota){
-	var diff = signatures/quota;
-	return color(diff);	
-	}
-	if(signatures < quota){
-	return "#b00"	
-	}
-	*/
-	var diff = signatures/quota;
-	//alert(country + ' ' + diff);
-	return color(diff);
-	
-	return "#CCC"
+  	if(signatures == null){
+	    return "#ccc";	
+	  }
+	  var diff = signatures/quota;
+	  return color(diff);
 	})
-    .attr("d", path)
+  .attr("d", path)
 	.on('click', click);
 	
 
