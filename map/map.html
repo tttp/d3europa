@@ -68,14 +68,21 @@ border-radius: 5px;
   background:#EBF4FA;
 }
 
+.ocean {
+  fill:#EBF4FA;
+}
+
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
-<script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+<!--script src="http://d3js.org/colorbrewer.v1.min.js"></script-->
+<script src="http://d3js.org/queue.v1.min.js"></script>
+
 <script>
 
-var width = 960,
+var active= null,
+    width = 960,
     height = 700;
 
   //equirectangular fits better on a screen (more width than height) than mercator()
@@ -85,21 +92,19 @@ var width = 960,
     .translate([width / 2, height / 2]);
 //    .translate([width / 2 - 320, height / 2 + 700]);
 
-var zoom = d3.behavior.zoom()
-    .translate(projection.translate())
-    .scale(projection.scale())
-    .scaleExtent([height, 8 * height])
-    .on("zoom", move);
 
 var svg = d3.select("body").append("svg")
     .attr("class", "map")
     .attr("width", width)
-    .attr("height", height)
-  .append("g")
-    .attr("transform", "translate(0,0)")
-    .call(zoom);
+    .attr("height", height);
 
-var defs = svg.append("defs");
+svg.append("rect")
+    .attr("class", "ocean")
+    .attr("width", width)
+    .attr("height", height)
+    .on("click", reset);
+
+var g = svg.append("g");
 
   //Countries paths
   var path = d3.geo.path()
@@ -118,17 +123,33 @@ var color = d3.scale.linear()
         .interpolate(d3.interpolateHcl);
 
 //Let's load the data that will be user for the choropleth
-var dataset; //global variable
+var dataset,europe;
 var lastdate = "2013-09-08";
 
-d3.json("full.json", function(error, json) {
-  if (error) return console.warn(error);
-  dataset = json;
-});
+queue()
+  .defer (function (callback) {
+    d3.json("full.json", function(error, json) {
+      if (error) {console.warn(error);callback();}
+      dataset = json;
+      callback();
+    });
+  })
+  .defer (function(callback) {
+    d3.json("europe50b.json", function(error, json) {
+      europe=json;
+      callback();
+    });
+  })
+  .await(function (){
+     map(europe);
+console.log("loaded");
+  });
+
+  
 
 
-d3.json("europe50b.json", function(error, europe50b) {
-	
+
+function map( europe50b) {	
   var countries = topojson.feature(europe50b, europe50b.objects.europe50);
 
 
@@ -141,7 +162,7 @@ d3.json("europe50b.json", function(error, europe50b) {
     .duration(2000) 
   	.attr("fill", "#444");
 	*/
-  feature = svg.selectAll(".country")
+  feature = g.selectAll(".country")
     .data(countries.features)
     .enter().append("path")
     .attr("class", function(d) { return "country " + d.id; })
@@ -179,12 +200,6 @@ d3.json("europe50b.json", function(error, europe50b) {
 	})
   .attr("d", path)
 
-
-//If we want something to happen when clicking on each country	
-function click(d) {
-	//uncomment the following line to enable tooltip on click. 
-	//tooltipin(d);
-}
 
 //Some functions to recover data about each country for the tooltips
 function getquota(id){
@@ -243,6 +258,21 @@ function tooltipout(d){
                 .style("opacity", 0);	
 }
 
+function click(d) {
+  if (active === d) return reset();
+  
+  if (getquota(d.id) == 0)  return reset ();
+
+  g.selectAll(".active").classed("active", false);
+  d3.select(this).classed("active", active = d);
+
+  var b = path.bounds(d);
+  g.transition().duration(750).attr("transform",
+      "translate(" + projection.translate() + ")"
+      + "scale(" + 0.75 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height) + ")"
+      + "translate(" + -(b[1][0] + b[0][0]) / 2 + "," + -(b[1][1] + b[0][1]) / 2 + ")");
+}
+
 /*
 //Cities dots
 	
@@ -279,13 +309,12 @@ svg.selectAll(".country-label")
     .text(function(d) { return d.properties.name; });
 	
 */
-});
+};
 
-function move() {
-  projection.translate(d3.event.translate).scale(d3.event.scale);
-  feature.attr("d", path);
-}	
-
+function reset() {
+  g.selectAll(".active").classed("active", active = false);
+  g.transition().duration(750).attr("transform", "");
+}
 </script>
 
 </body>
