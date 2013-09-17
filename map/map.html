@@ -77,6 +77,8 @@ var color = d3.scale.quantize()
 
 //Let's load the data that will be user for the choropleth
 var dataset; //global variable
+var lastdate = "2013-09-08";
+
 d3.json("full.json", function(error, json) {
   if (error) return console.warn(error);
   dataset = json;
@@ -126,25 +128,10 @@ d3.json("europe50b.json", function(error, europe50b) {
 	.attr("fill", function(d) {
 	  var country = d.id;
 	
-  	var quota;
-	  var signatures;
-	  var counter = 0;
+  	var quota =getquota (country);
+	  var signatures =getsignatures(country);
 
-  	for(a in dataset.quota){
-  	  if(a == country){
-  	    quota = dataset.quota[a];
-	    }
-	
-  	  for(a in dataset.eci){
-	      if(counter < 1){
-	        signatures = dataset.eci[a][country];
-	        counter ++;
-	      }
-  	  }
-  	}
-	
-	
-  	if(signatures == null){
+  	if(signatures == 0){
 	    return "#ccc";	
 	  }
 	  var diff = signatures/quota;
@@ -162,30 +149,20 @@ function click(d) {
 
 //Some functions to recover data about each country for the tooltips
 function getquota(id){
-	var quota;
-  	for(a in dataset.quota){
-
-  	if(a == id){
-  	return dataset.quota[a];
-	}
-}
-	return "/";	
+		if(dataset.quota[id] != null){
+	  	return dataset.quota[id];
+		} else {
+	    return "0";
+    }
 }
 
 function getsignatures(id){
+		if(dataset.eci[lastdate][id] == null)
+	    return "0";
 
-	var counter = 0;
-	
-  	for(a in dataset.eci){
-	if(counter < 1){
-		if(dataset.eci[a][id] != null){
-	  	return dataset.eci[a][id];
-		}
-	  counter ++;
-	  return "/";
-	}
-  	}	
-	
+	  var online = dataset.eci[lastdate][id];
+	  var paper = dataset.paper[id];
+    return online + paper;
 }
 
 
