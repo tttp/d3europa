@@ -145,7 +145,11 @@ d3.json("europe50b.json", function(error, europe50b) {
   	tooltipout(d);
 	})
 	.on('click', click)
-	.attr("fill", "#a00")
+	.attr("fill", function (d) {
+    if (getquota(d.id) >0)
+      return color(1);
+    return "#ccc";
+  })
 	.transition()        
   .duration(3000) 
 	.attr("fill", function(d) {
