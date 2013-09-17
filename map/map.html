@@ -48,7 +48,7 @@
 <script>
 
 var width = 960,
-    height = 1160;
+    height = 700;
 
 var svg = d3.select("body").append("svg")
     .attr("class", "map")
@@ -76,9 +76,12 @@ d3.json("europe50b.json", function(error, europe50b) {
 	
   var subunits = topojson.feature(europe50b, europe50b.objects.europe50);
 
-  var projection = d3.geo.mercator()
-    .scale(600)
-    .translate([width / 2 - 150, height / 2 + 350]);
+  //equirectangular fits better on a screen (more width than height) than mercator()
+  var projection = d3.geo.equirectangular()
+    .center([15,50.7]) //theorically, 50°7′2.23″N 9°14′51.97″E
+    .scale(width)
+    .translate([width / 2, height / 2]);
+//    .translate([width / 2 - 320, height / 2 + 700]);
 
 
   //Countries paths
@@ -194,7 +197,7 @@ function tooltipout(d){
 
 
 //Cities dots
-/*	
+	
 svg.append("path")
     .datum(topojson.feature(europe50b, europe50b.objects.euplaces50))
     .attr("d", path)
@@ -216,9 +219,9 @@ svg.selectAll(".place-label")
     .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
     .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
 
-*/
 
-/* country label	
+
+//country label	
 svg.selectAll(".subunit-label")
     .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
   .enter().append("text")
@@ -226,7 +229,6 @@ svg.selectAll(".subunit-label")
     .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
     .attr("dy", ".35em")
     .text(function(d) { return d.properties.name; });
-*/
 	
 });
 
