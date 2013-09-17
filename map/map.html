@@ -4,6 +4,13 @@
 
 .country {
   /*fill: #ddd;*/	
+  stroke: white;
+  stroke-width:0;
+}
+
+.over {
+  opacity:0.8;
+  stroke-width:1px;
 }
 
 .country-label {
@@ -94,37 +101,6 @@ var svg = d3.select("body").append("svg")
 
 var defs = svg.append("defs");
 
-// create filter with id #drop-shadow
-// height=130% so that the shadow is not clipped
-var filter = defs.append("filter")
-    .attr("id", "drop-shadow")
-    .attr("height", "130%");
-
-// SourceAlpha refers to opacity of graphic that this filter will be applied to
-// convolve that with a Gaussian with standard deviation 3 and store result
-// in blur
-filter.append("feGaussianBlur")
-    .attr("in", "SourceAlpha")
-    .attr("stdDeviation", 5)
-    .attr("result", "blur");
-
-// translate output of Gaussian blur to the right and downwards with 2px
-// store result in offsetBlur
-filter.append("feOffset")
-    .attr("in", "blur")
-    .attr("dx", 5)
-    .attr("dy", 5)
-    .attr("result", "offsetBlur");
-
-// overlay original SourceGraphic over translated blurred opacity by using
-// feMerge filter. Order of specifying inputs is important!
-var feMerge = filter.append("feMerge");
-
-feMerge.append("feMergeNode")
-    .attr("in", "offsetBlur")
-feMerge.append("feMergeNode")
-    .attr("in", "SourceGraphic");
-
   //Countries paths
   var path = d3.geo.path()
     .projection(projection);
@@ -170,18 +146,18 @@ d3.json("europe50b.json", function(error, europe50b) {
     .attr("d", path)
   	.on("mouseover", function(d) { 
     	d3.select(this)
-      .style("filter", "url(#drop-shadow)");
+      .classed("over",true)
 	    //comment the following line to disable tooltip on mouseover 
      	tooltipin(d);
 	})
 	.on("mouseout", function(d) { 
   	d3.select(this).style("opacity","1")
-      .style("filter", null);
+      .classed("over",false)
   	tooltipout(d);
 	})
 	.on('click', click)
 	.attr("fill", function (d) {
-    if (getquota(d.id) >0)
+    if (getquota(d.id) >0) // if EU country
       return color(1);
     return "#ccc";
   })
@@ -254,7 +230,7 @@ function tooltipin(d){
                 .duration(200)      
                 .style("opacity", .9);      
             div .html("<h2>"+ title + "</h2><div class='body'>" +body +"</div>")  
-                .style("left", (d3.event.pageX) + "px")     
+                .style("left", (d3.event.pageX + 20) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px"); 	
 }
 
