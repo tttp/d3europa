@@ -10,6 +10,7 @@
 
 .over {
   opacity:0.8;
+  transition: opacity 500ms linear, stroke-width 500ms linear;
   stroke-width:1px;
 }
 
@@ -40,6 +41,27 @@
   border: 0px;      
   border-radius: 5px;           
   pointer-events: none;         
+  border: 1px solid rgba(0,0,0,.2);
+  z-index: 10000;
+
+  transition: opacity 500ms linear;
+  -moz-transition: opacity 500ms linear;
+  -webkit-transition: opacity 500ms linear;
+
+  transition-delay: 500ms;
+  -moz-transition-delay: 500ms;
+  -webkit-transition-delay: 500ms;
+
+  -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  box-shadow: 0 5px 10px rgba(0,0,0,.2);
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .tooltip h2 {
@@ -273,7 +295,7 @@ function click(d) {
       + "translate(" + -(b[1][0] + b[0][0]) / 2 + "," + -(b[1][1] + b[0][1]) / 2 + ")");
 }
 
-/*
+function drawCities() {
 //Cities dots
 	
 svg.append("path")
@@ -292,23 +314,24 @@ svg.selectAll(".place-label")
     .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
     .attr("dy", ".35em")
     .text(function(d) { return d.properties.name; });
-	
-svg.selectAll(".place-label")
+}
+
+function drawCountriesLabel() {	
+  svg.selectAll(".place-label")
     .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
     .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
 
-
-
 //country label	
-svg.selectAll(".country-label")
+  svg.selectAll(".country-label")
     .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
   .enter().append("text")
     .attr("class", function(d) { return "country-label " + d.id; })
     .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
     .attr("dy", ".35em")
     .text(function(d) { return d.properties.name; });
-	
-*/
+}	
+
+
 };
 
 function reset() {
