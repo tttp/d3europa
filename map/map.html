@@ -202,14 +202,14 @@ function map( europe50b) {
 	})
 	.on('click', click)
 	.attr("fill", function (d) {
-    if (getquota(d.id) >0) // if EU country
+    if (getquota(getiso(d)) >0) // if EU country
       return color(1);
     return "#ccc";
   })
 	.transition()        
   .duration(3000) 
 	.attr("fill", function(d) {
-	  var country = d.id;
+	  var country = getiso (d);
 	
   	var quota =getquota (country);
 	  var signatures =getsignatures(country);
@@ -222,6 +222,12 @@ function map( europe50b) {
 	})
   .attr("d", path)
 
+function getiso (feature) {
+  var id=feature.id.toLowerCase();
+  if (id == "gb") return "uk";
+  if (id == "gr") return "el";
+  return id;
+}
 
 //Some functions to recover data about each country for the tooltips
 function getquota(id){
@@ -250,10 +256,11 @@ function getsignatures(id, type){
 
 //Function for showing the tooltip. It can be used for onmouseover actions or for click actions	
 function tooltipin(d){
-  var quota = getquota(d.id);
+  var id=getiso(d);
+  var quota = getquota(id);
   if (quota>0) {
-    var online = getsignatures(d.id,"online");
-    var paper = getsignatures(d.id,"paper");
+    var online = getsignatures(id,"online");
+    var paper = getsignatures(id,"paper");
     var percentage = Math.floor(((online + paper) / quota) * 100);
     var title = d.properties.name + " "+ percentage+ "%";
     var body= 
@@ -283,7 +290,7 @@ function tooltipout(d){
 function click(d) {
   if (active === d) return reset();
   
-  if (getquota(d.id) == 0)  return reset ();
+  if (getquota(getiso(d)) == 0)  return reset ();
 
   g.selectAll(".active").classed("active", false);
   d3.select(this).classed("active", active = d);
