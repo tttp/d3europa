@@ -109,8 +109,8 @@ var active= null,
 
   //equirectangular fits better on a screen (more width than height) than mercator()
   var projection = d3.geo.equirectangular()
-    .center([15,50.7]) //theorically, 50°7′2.23″N 9°14′51.97″E
-    .scale(width)
+    .center([13,52]) //theorically, 50°7′2.23″N 9°14′51.97″E
+    .scale(width*1.11)
     .translate([width / 2, height / 2]);
 //    .translate([width / 2 - 320, height / 2 + 700]);
 
