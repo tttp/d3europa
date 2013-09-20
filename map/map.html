@@ -4,7 +4,8 @@
 
 .title {
   font: 80px Helvetica Neue;
-  fill:#EBF4FA;
+  fill:darkgreen;
+  afill:#EBF4FA;
 }
 
 
@@ -132,15 +133,8 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
- var title = svg.append("text")
-    .attr("viewPort","0 0 300 100" )
-    .attr("class", "title")
-    .text("Total signatures")
-    .attr("x", 50)
-    .attr("y", 100);
-
-
 var g = svg.append("g");
+
 
   //Countries paths
   var path = d3.geo.path()
@@ -167,14 +161,6 @@ queue()
     d3.json("full.json", function(error, json) {
       if (error) {console.warn(error);callback();}
       dataset = json;
-      var total = 0;
-      d3.map(dataset.paper).forEach(function(k,v){total += v;});
-      d3.map(dataset.eci[lastdate]).forEach(function(k,v){total += v;});
-	    title.transition()        
-        .text(total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"))
-        .duration(2000) 
-      	.style("fill", "#666");
-
       callback();
     });
   })
@@ -242,6 +228,23 @@ function map( europe50b) {
 	  return color(diff);
 	})
   .attr("d", path)
+
+      var total = 0;
+      d3.map(dataset.paper).forEach(function(k,v){total += v;});
+      d3.map(dataset.eci[lastdate]).forEach(function(k,v){total += v;});
+      var title = g.append("text")
+        .attr("class", "title")
+        .attr("transform", "scale(2)")
+        .attr("x", 80)
+        .attr("y", 200)
+  	    .transition()        
+          .attr("x", 50)
+          .attr("y", 100)
+          .text(total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"))
+          .duration(2000) 
+          .attr("transform", "scale(1)")
+      	  .style("fill", "#666");
+
 
 function getiso (feature) {
   var id=feature.id.toLowerCase();
