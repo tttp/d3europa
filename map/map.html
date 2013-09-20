@@ -2,6 +2,12 @@
 <meta charset="utf-8">
 <style>
 
+.title {
+  font: 80px Helvetica Neue;
+  fill:#EBF4FA;
+}
+
+
 .country {
   /*fill: #ddd;*/	
   stroke: white;
@@ -126,6 +132,14 @@ svg.append("rect")
     .attr("height", height)
     .on("click", reset);
 
+ var title = svg.append("text")
+    .attr("viewPort","0 0 300 100" )
+    .attr("class", "title")
+    .text("Total signatures")
+    .attr("x", 50)
+    .attr("y", 100);
+
+
 var g = svg.append("g");
 
   //Countries paths
@@ -153,6 +167,14 @@ queue()
     d3.json("full.json", function(error, json) {
       if (error) {console.warn(error);callback();}
       dataset = json;
+      var total = 0;
+      d3.map(dataset.paper).forEach(function(k,v){total += v;});
+      d3.map(dataset.eci[lastdate]).forEach(function(k,v){total += v;});
+	    title.transition()        
+        .text(total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"))
+        .duration(2000) 
+      	.style("fill", "#666");
+
       callback();
     });
   })
@@ -164,7 +186,6 @@ queue()
   })
   .await(function (){
      map(europe);
-console.log("loaded");
   });
 
   
