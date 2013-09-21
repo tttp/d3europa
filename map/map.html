@@ -31,14 +31,36 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.place-label {
+.city-label {
   fill: #000;
   fill-opacity: .5;
   font-size: 10px;
   font-weight: 300;
   text-anchor: middle;
   font-family: Arial, Helvetica, sans-serif;
+  display:none;
 }
+
+.city {
+  pointer-events: none;         
+  fill-opacity: .7;
+  display:none;
+}
+
+.city.active {
+  display:block;
+}
+
+.city.capital {
+  pointer-events: none;         
+  fill-opacity: .5;
+  display:block;
+}
+
+.city-label.active {
+  display:block;
+}
+
 
 .tooltip {   
   position: absolute;           
@@ -138,8 +160,8 @@ var g = svg.append("g");
 
 
   //Countries paths
-  var path = d3.geo.path()
-    .projection(projection);
+var path = d3.geo.path().projection(projection);
+
 var feature=null;
 
 var div = d3.select("body").append("div")   
@@ -154,7 +176,7 @@ var color = d3.scale.linear()
         .interpolate(d3.interpolateHcl);
 
 //Let's load the data that will be user for the choropleth
-var dataset,europe;
+var dataset,europe,places;
 var lastdate = "2013-09-08";
 
 queue()
@@ -171,31 +193,25 @@ queue()
       callback();
     });
   })
+  .defer (function(callback) {
+    d3.json("places.json", function(error, json) {
+      places=json;
+      callback();
+    });
+  })
   .await(function (){
      map(europe);
   });
 
-  
 
+function map( json ) {	
+  var countries = topojson.feature(json, json.objects.countries);
 
-
-function map( europe50b) {	
-  var countries = topojson.feature(europe50b, europe50b.objects.europe50);
-
-
-/*	
-  svg.append("path")
-  	.datum(countries)
-  	.attr("d", path)
-	  .attr("fill", "#ccc")
-	  .transition()        
-    .duration(2000) 
-  	.attr("fill", "#444");
-	*/
   feature = g.selectAll(".country")
     .data(countries.features)
     .enter().append("path")
-    .attr("class", function(d) { return "country " + d.id; })
+    .attr("class", function(d) {
+ return "country " + d.id; })
     .attr("d", path)
   	.on("mouseover", function(d) { 
     	d3.select(this)
@@ -208,7 +224,7 @@ function map( europe50b) {
       .classed("over",false)
   	tooltipout(d);
 	})
-	.on('click', click)
+	.on("click", click)
 	.attr("fill", function (d) {
     if (getquota(getiso(d)) >0) // if EU country
       return color(1);
@@ -230,6 +246,10 @@ function map( europe50b) {
 	})
   .attr("d", path)
 
+drawTotal();
+drawCities();
+
+function drawTotal () {
       var total = 0;
       d3.map(dataset.paper).forEach(function(k,v){total += v;});
       d3.map(dataset.eci[lastdate]).forEach(function(k,v){total += v;});
@@ -245,7 +265,7 @@ function map( europe50b) {
           .duration(2000) 
           .attr("transform", "scale(1)")
       	  .style("fill", "#666");
-
+}
 
 function getiso (feature) {
   var id=feature.id.toLowerCase();
@@ -325,26 +345,47 @@ function click(d) {
       "translate(" + projection.translate() + ")"
       + "scale(" + 0.75 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height) + ")"
       + "translate(" + -(b[1][0] + b[0][0]) / 2 + "," + -(b[1][1] + b[0][1]) / 2 + ")");
+   //.classed("active", true)
+  g.selectAll(".city."+d.id)
+   .classed("active", true)
+   .style("opacity",0)
+   .transition().duration(750)
+	    .attr("r", function(d) {return (7-d.properties.rank)})
+     .style("opacity","0.5")
+
+  g.selectAll(".city-label."+d.id)
+   .classed("active", true)
+   .style("opacity",0)
+   .transition().duration(750)
+     .style("opacity","0.5")
+
 }
 
 function drawCities() {
 //Cities dots
-	
-svg.append("path")
-    .datum(topojson.feature(europe50b, europe50b.objects.euplaces50))
+/*
+g.append("path")
+    .datum(topojson.feature(places, places.objects.places))
     .attr("d", path)
-	.attr("r", "1px")
-	.attr("d", path.pointRadius(2))
-    .attr("class", "place");
+	.attr("r", "0.3px")
+    .attr("class", "cities")
+*/
+g.selectAll(".city")
+    .data(topojson.feature(places, places.objects.places).features)
+  .enter().append("circle")
+	  .attr("r",function(d){return (8-d.properties.rank)/4})
+    .attr("cx", function(d) {  return projection(d.geometry.coordinates)[0];})
+    .attr("cy", function(d) {  return projection(d.geometry.coordinates)[1];})
+    .attr("class", function (d) {return "city "+d.properties.iso+" "+d.properties.type})
+//    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
 
 //Cities labels
-	
-svg.selectAll(".place-label")
-    .data(topojson.feature(europe50b, europe50b.objects.euplaces50).features)
+g.selectAll(".city-label")
+    .data(topojson.feature(places, places.objects.places).features)
   .enter().append("text")
-    .attr("class", "place-label")
+    .attr("class", function (d) {return "city-label "+d.properties.iso+" "+d.properties.type})
     .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
-    .attr("dy", ".35em")
+    .attr("dy", "-.8em")
     .text(function(d) { return d.properties.name; });
 }
 
@@ -355,7 +396,7 @@ function drawCountriesLabel() {
 
 //country label	
   svg.selectAll(".country-label")
-    .data(topojson.feature(europe50b, europe50b.objects.europe50).features)
+    .data(topojson.feature(europe50b, europe50b.objects.countries).features)
   .enter().append("text")
     .attr("class", function(d) { return "country-label " + d.id; })
     .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
